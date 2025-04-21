@@ -1,12 +1,23 @@
 from ntc_templates.parse import parse_output
 
 class CommandParser:
+    def _convert_to_ntc_platform(self, device_type):
+        """Convert device type to NTC templates platform format."""
+        platform_map = {
+            'ios': 'cisco_ios',
+            'xe': 'cisco_ios',  # Cisco XE uses the same templates as IOS
+            'nxos': 'cisco_nxos',
+            'cisco_ios': 'cisco_ios',
+            'cisco_xe': 'cisco_ios',
+            'cisco_nxos': 'cisco_nxos'
+        }
+        return platform_map.get(device_type.lower(), device_type)
+
     def parse(self, command, raw_output, netmiko_os):
         try:
-            print(f"[DEBUG] Parsing command: {command}")
-            print(f"[DEBUG] Using platform: {netmiko_os}")
+            ntc_platform = self._convert_to_ntc_platform(netmiko_os)
             parsed = parse_output(
-                platform=netmiko_os,
+                platform=ntc_platform,
                 command=command,
                 data=raw_output
             )
