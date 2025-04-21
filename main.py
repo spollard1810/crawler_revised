@@ -1,15 +1,20 @@
-### test script for the network device class to grab cdp neighbors and print out the object info
+from core.device_handler import DeviceHandler
 
-from connector import HybridNetworkDeviceBuilder
+# Create a device handler
+handler = DeviceHandler("192.168.1.1", "admin", "password")
 
-device = (
-    HybridNetworkDeviceBuilder("10.0.0.1")
-    .with_credentials("admin", "hunter2")
-    .build()
-)
+# Get raw output
+raw_output = handler.run("show interface")
 
+# Get parsed output
+parsed_output = handler.run_and_parse("show interface")
 
-cdp = device.get_cdp_neighbors()
-print(cdp)
+# Get structured neighbor information
+cdp_neighbors = handler.get_cdp_neighbors()
+lldp_neighbors = handler.get_lldp_neighbors()
 
-device.disconnect()
+# Get version information
+version_info = handler.get_version_info()
+
+# Clean up
+handler.disconnect()
