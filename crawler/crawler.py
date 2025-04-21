@@ -26,13 +26,13 @@ class Crawler:
         if not self.username or not self.password:
             raise ValueError("Username and password must be provided")
 
-    def add_seed_device(self, hostname: str, ip: str, username: str, password: str) -> None:
+    def add_seed_device(self, hostname: str, username: str, password: str) -> None:
         """Add a seed device to start the crawl from."""
-        device_id = self.db.add_device(hostname, ip)
+        device_id = self.db.add_device(hostname)
         if device_id:
-            self.logger.info(f"Added seed device {hostname} ({ip}) to queue")
+            self.logger.info(f"Added seed device {hostname} to queue")
         else:
-            self.logger.warning(f"Device {hostname} ({ip}) already exists in database")
+            self.logger.warning(f"Device {hostname} already exists in database")
 
     def start(self, num_workers: int = 4) -> None:
         """Start the crawler with the specified number of worker threads."""
@@ -100,11 +100,16 @@ class Crawler:
     def _handle_connecting(self, device: Dict[str, Any], worker_id: str) -> None:
         """Handle the connecting state."""
         device_id = device['id']
-        handler = DeviceHandler(device['ip'], self.username, self.password)
+        handler = DeviceHandler(device['hostname'], self.username, self.password)
         
         try:
             # Test connection
             handler.run("show version")
+            
+            # Get IP from device
+            ip_info = handler.run_and_parse("show ip interface brief")
+            if ip_info and 'ip' in ip_info:
+                self.db.update_device_info(device_id, {'ip': ip_info['ip']})
             
             transition = DeviceFSM.create_transition(
                 DeviceState.CONNECTING,
@@ -123,7 +128,7 @@ class Crawler:
     def _handle_collecting(self, device: Dict[str, Any], worker_id: str) -> None:
         """Handle the collecting state."""
         device_id = device['id']
-        handler = DeviceHandler(device['ip'], self.username, self.password)
+        handler = DeviceHandler(device['hostname'], self.username, self.password)
         
         try:
             # Collect device information
@@ -155,7 +160,7 @@ class Crawler:
     def _handle_discovered(self, device: Dict[str, Any], worker_id: str) -> None:
         """Handle the discovered state."""
         device_id = device['id']
-        handler = DeviceHandler(device['ip'], self.username, self.password)
+        handler = DeviceHandler(device['hostname'], self.username, self.password)
         
         try:
             # Get neighbors
@@ -163,10 +168,7 @@ class Crawler:
             
             # Add neighbors to queue
             for neighbor in neighbors:
-                self.db.add_device(
-                    neighbor.get('hostname', 'unknown'),
-                    neighbor.get('ip', 'unknown')
-                )
+                self.db.add_device(neighbor.get('hostname', 'unknown'))
             
             # Move to next state
             next_state = DeviceState.ENRICHED if not device['enriched'] else DeviceState.DONE

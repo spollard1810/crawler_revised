@@ -17,8 +17,8 @@ class Database:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS devices (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    hostname TEXT NOT NULL,
-                    ip TEXT NOT NULL UNIQUE,
+                    hostname TEXT NOT NULL UNIQUE,
+                    ip TEXT,
                     serial TEXT,
                     platform TEXT,
                     state TEXT NOT NULL,
@@ -56,15 +56,15 @@ class Database:
             finally:
                 conn.close()
 
-    def add_device(self, hostname: str, ip: str) -> int:
+    def add_device(self, hostname: str) -> int:
         """Add a new device to the queue."""
         with self._get_connection() as conn:
             cursor = conn.execute("""
-                INSERT INTO devices (hostname, ip, state, last_seen)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT (ip) DO NOTHING
+                INSERT INTO devices (hostname, state, last_seen)
+                VALUES (?, ?, ?)
+                ON CONFLICT (hostname) DO NOTHING
                 RETURNING id
-            """, (hostname, ip, DeviceState.QUEUED.name, datetime.utcnow()))
+            """, (hostname, DeviceState.QUEUED.name, datetime.utcnow()))
             
             result = cursor.fetchone()
             if result:

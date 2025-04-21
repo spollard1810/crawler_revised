@@ -1,21 +1,23 @@
 from core import DeviceHandler
+from crawler import CrawlerBuilder
 
-# Create a device handler
-handler = DeviceHandler("192.168.1.1", "admin", "password")
+#test cases for core
+#handler = DeviceHandler("192.168.1.1", "admin", "password")
 
-# Get raw output
-raw_output = handler.run("show interface")
+#raw_output = handler.run("show interface")
 
-# Get parsed output
-parsed_output = handler.run_and_parse("show interface")
-
-# Get structured neighbor information
-cdp_neighbors = handler.get_cdp_neighbors()
-print(len(cdp_neighbors))
+#parsed_output = handler.run_and_parse("show interface")
 
 
-# Get version information
-version_info = handler.get_version_info()
+# Initialize the builder
+builder = CrawlerBuilder()
 
-# Clean up
-handler.disconnect()
+# Configure the crawler
+builder.with_seed_device(
+    hostname="router1.example.com",  # The hostname to start crawling from
+    username="admin",                # SSH username
+    password="password"              # SSH password
+)
+
+# Start the crawler
+builder.start()
