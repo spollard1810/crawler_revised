@@ -70,6 +70,53 @@ crawler_revised/
 └── readme.md         # Documentation
 ```
 
+## Class Breakdown
+
+### DeviceHandler
+The main interface class for interacting with network devices.
+
+- `__init__(hostname_or_ip, username, password, validate=False)`: Initializes the device handler with connection details
+- `run(command)`: Executes a raw command and returns unparsed output
+- `run_and_parse(command)`: Executes a command and returns structured, parsed output
+- `get_cdp_neighbors()`: Retrieves and parses CDP neighbor information
+- `get_lldp_neighbors()`: Retrieves and parses LLDP neighbor information
+- `get_version_info()`: Retrieves and parses device version information
+- `disconnect()`: Closes the device connection
+
+### CommandSender
+Handles the execution of commands on network devices.
+
+- `__init__(device)`: Initializes with a device connection
+- `get_cdp_neighbors()`: Sends CDP neighbor discovery command
+- `get_lldp_neighbors()`: Sends LLDP neighbor discovery command
+- `get_version_info()`: Sends version information command
+- `send_custom(command)`: Sends a custom command to the device
+
+### CommandParser
+Manages the parsing of command outputs into structured data.
+
+- `parse(command, raw_output, netmiko_os)`: Parses raw command output into structured data
+- `_convert_to_ntc_platform(device_type)`: Converts device types to NTC templates format
+
+### HybridNetworkDevice
+Core class for device connectivity and command execution.
+
+- `__init__(hostname_or_ip, username, password)`: Initializes device connection parameters
+- `detect_os_and_initialize()`: Automatically detects device operating system
+- `connect_netmiko()`: Establishes Netmiko connection
+- `run_command(command)`: Executes a command on the device
+- `disconnect()`: Closes the device connection
+- `get_OS()`: Returns the detected device operating system
+
+### HybridNetworkDeviceBuilder
+Builder pattern implementation for creating device connections.
+
+- `__init__(hostname_or_ip)`: Initializes builder with device address
+- `with_credentials(username, password)`: Sets device credentials
+- `with_validation(validate)`: Enables/disables host validation
+- `_ping_host()`: Validates host reachability
+- `build()`: Creates and returns a configured device instance
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

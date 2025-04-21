@@ -13,3 +13,6 @@ class CommandSender:
 
     def send_custom(self, command):
         return self.device.run_command(command)
+ 
+    def get_inventory(self):
+        return self.device.run_command("show inventory")

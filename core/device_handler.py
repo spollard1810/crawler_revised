@@ -47,6 +47,11 @@ class DeviceHandler:
         raw = self.sender.get_version_info()
         return self._parse_output("show version", raw)
 
+    def get_inventory(self):
+        """Get and parse inventory information"""
+        raw = self.sender.get_inventory()
+        return self._parse_output("show inventory", raw)
+
     def disconnect(self):
         """Disconnect from the device"""
         self.device.disconnect()
