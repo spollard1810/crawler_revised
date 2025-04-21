@@ -34,7 +34,6 @@ pip install -r requirements.txt
 ## Dependencies
 
 - netmiko: Multi-vendor library to simplify Paramiko SSH connections to network devices
-- napalm: Network Automation and Programmability Abstraction Layer with Multivendor support
 - ntc-templates: TextFSM templates for parsing show commands
 
 ## Usage
