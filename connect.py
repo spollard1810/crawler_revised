@@ -1,71 +1,71 @@
-import paramiko
+from napalm import get_network_driver
 from netmiko import ConnectHandler
+from netmiko.ssh_exception import NetMikoAuthenticationException, NetMikoTimeoutException
 
-class NetworkDevice:
-    def __init__(self, hostname, ip, username, password, device_type=None):
+class HybridNetworkDevice:
+    def __init__(self, hostname, ip, username, password):
         self.hostname = hostname
         self.ip = ip
         self.username = username
         self.password = password
-        self.connection = None
-        self.device_type = device_type or self.get_device_type()
+        self.device_os = None
+        self.napalm_driver = None
+        self.netmiko_conn = None
 
-    def connect(self):
-        self.connection = ConnectHandler(
-            device_type=self.device_type,
-            ip=self.ip,
-            username=self.username,
-            password=self.password
-        )
+        self.detect_device_type()  # ← Automatically determine on instantiation
+
+    def detect_device_type(self):
+        """Try each NAPALM driver to detect the device OS and open a NAPALM session if successful."""
+        for driver_name in ['ios', 'iosxr', 'nxos', 'eos', 'asa']:
+            try:
+                driver = get_network_driver(driver_name)
+                device = driver(self.ip, self.username, self.password)
+                device.open()
+                facts = device.get_facts()
+                self.napalm_driver = device
+                self.device_os = driver_name
+                print(f"[+] Detected OS via NAPALM: {driver_name}")
+                return
+            except Exception:
+                continue
+
+        print("[-] Unable to detect OS with NAPALM")
+        self.device_os = "unknown"
+
+    def connect_netmiko(self):
+        """Establish a Netmiko connection using the detected OS."""
+        device_type_map = {
+            'ios': 'cisco_ios',
+            'iosxr': 'cisco_xr',
+            'nxos': 'cisco_nxos',
+            'eos': 'arista_eos',
+            'asa': 'cisco_asa',
+        }
+
+        try:
+            self.netmiko_conn = ConnectHandler(
+                device_type=device_type_map.get(self.device_os, 'cisco_ios'),
+                ip=self.ip,
+                username=self.username,
+                password=self.password
+            )
+            print("[+] Netmiko connected")
+        except (NetMikoTimeoutException, NetMikoAuthenticationException) as e:
+            print(f"[-] Netmiko connection failed: {e}")
 
     def run_command(self, command):
-        if not self.connection:
-            self.connect()
-        return self.connection.send_command(command)
+        """Run command using Netmiko."""
+        if not self.netmiko_conn:
+            self.connect_netmiko()
+        return self.netmiko_conn.send_command(command)
+
+    def get_cdp_neighbors(self):
+        """Fetch CDP neighbors via Netmiko."""
+        return self.run_command("show cdp neighbors detail")
 
     def disconnect(self):
-        if self.connection:
-            self.connection.disconnect()
-
-    def get_device_type(self):
-        try:
-            version_output = self.run_command("show version")
-            
-            # Cisco IOS
-            if "Cisco IOS Software" in version_output:
-                if "IOS-XE" in version_output:
-                    return "cisco_xe"
-                elif "IOS-XR" in version_output:
-                    return "cisco_xr"
-                elif "Nexus" in version_output:
-                    return "cisco_nxos"
-                else:
-                    return "cisco_ios"
-            
-            # Cisco ASA
-            elif "Cisco Adaptive Security Appliance" in version_output:
-                return "cisco_asa"
-            
-            # Cisco WLC
-            elif "Cisco Controller" in version_output:
-                return "cisco_wlc"
-            
-            # Cisco ACI
-            elif "Cisco Application Centric Infrastructure" in version_output:
-                return "cisco_aci"
-            
-            # Cisco Meraki
-            elif "Cisco Meraki" in version_output:
-                return "cisco_meraki"
-            
-            # Arista
-            elif "Arista" in version_output:
-                return "arista_eos"
-            
-            # Default case
-            else:
-                return "unknown"
-                
-        except Exception as e:
-            print(f"Error detecting device type: {str(e)}")
-            return "unknown"
+        """Cleanup both NAPALM and Netmiko sessions."""
+        if self.napalm_driver:
+            self.napalm_driver.close()
+        if self.netmiko_conn:
+            self.netmiko_conn.disconnect()
