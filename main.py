@@ -1,5 +1,5 @@
 from core import DeviceHandler
-from crawler import CrawlerBuilder
+from crawler import Crawler
 
 #test cases for core
 #handler = DeviceHandler("192.168.1.1", "admin", "password")
@@ -9,15 +9,13 @@ from crawler import CrawlerBuilder
 #parsed_output = handler.run_and_parse("show interface")
 
 
-# Initialize the builder
-builder = CrawlerBuilder()
-
-# Configure the crawler
-builder.with_seed_device(
-    hostname="router1.example.com",  # The hostname to start crawling from
-    username="admin",                # SSH username
-    password="password"              # SSH password
+crawler = (
+    Crawler()
+    .with_seed_device("192.168.1.1", "admin", "secret")
+    .with_workers(5)
+    .with_debug(True)
+    .build()
 )
 
 # Start the crawler
-builder.start()
+crawler.start()
