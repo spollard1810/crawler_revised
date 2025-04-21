@@ -1,6 +1,6 @@
-from connector import HybridNetworkDeviceBuilder
-from command_sender import CommandSender
-from command_parser import CommandParser
+from .connector import HybridNetworkDeviceBuilder
+from .command_sender import CommandSender
+from .command_parser import CommandParser
 
 class DeviceHandler:
     def __init__(self, hostname_or_ip, username, password, validate=False):
