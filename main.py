@@ -8,8 +8,6 @@ device = (
     .build()
 )
 
-facts = device.get_facts()
-print(facts)
 
 cdp = device.get_cdp_neighbors()
 print(cdp)

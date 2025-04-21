@@ -3,7 +3,6 @@ import platform
 from netmiko import ConnectHandler
 from netmiko.ssh_autodetect import SSHDetect
 from netmiko.exceptions import NetMikoAuthenticationException, NetMikoTimeoutException
-from napalm import get_network_driver
 
 
 class HybridNetworkDeviceBuilder:
@@ -23,7 +22,6 @@ class HybridNetworkDeviceBuilder:
         return self
 
     def _is_reachable(self):
-        """Ping the host before attempting SSH detection."""
         count_flag = "-n" if platform.system().lower() == "windows" else "-c"
         try:
             result = subprocess.run(
@@ -50,23 +48,15 @@ class HybridNetworkDeviceBuilder:
             username=self.username,
             password=self.password
         )
-class HybridNetworkDevice:
-    NETMIKO_TO_NAPALM = {
-        'cisco_ios': 'ios',
-        'cisco_xr': 'iosxr',
-        'cisco_nxos': 'nxos',
-        'arista_eos': 'eos',
-        'cisco_asa': 'asa'
-    }
 
+
+class HybridNetworkDevice:
     def __init__(self, hostname_or_ip, username, password):
         self.hostname = hostname_or_ip
         self.ip = hostname_or_ip
         self.username = username
         self.password = password
-        self.device_os_netmiko = None
-        self.device_os_napalm = None
-        self.napalm_driver = None
+        self.device_os = None
         self.netmiko_conn = None
 
         self.detect_os_and_initialize()
@@ -81,30 +71,16 @@ class HybridNetworkDevice:
                 username=self.username,
                 password=self.password
             )
-            self.device_os_netmiko = guesser.autodetect()
+            self.device_os = guesser.autodetect()
 
-            if not self.device_os_netmiko:
+            if not self.device_os:
                 raise Exception("SSHDetect failed to determine device type")
 
-            print(f"[+] Netmiko detected OS: {self.device_os_netmiko}")
-
-            self.device_os_napalm = self.NETMIKO_TO_NAPALM.get(self.device_os_netmiko)
-
-            if self.device_os_napalm:
-                try:
-                    driver = get_network_driver(self.device_os_napalm)
-                    device = driver(self.ip, self.username, self.password)
-                    device.open()
-                    self.napalm_driver = device
-                    print(f"[+] NAPALM session opened with {self.device_os_napalm}")
-                except Exception as e:
-                    print(f"[-] Failed to open NAPALM session: {e}")
-            else:
-                print(f"[-] No NAPALM driver mapped for {self.device_os_netmiko}")
+            print(f"[+] Netmiko detected OS: {self.device_os}")
 
         except Exception as e:
             print(f"[-] SSHDetect failed: {e}")
-            self.device_os_netmiko = "unknown"
+            self.device_os = "unknown"
 
     def connect_netmiko(self):
         if self.netmiko_conn:
@@ -112,7 +88,7 @@ class HybridNetworkDevice:
 
         try:
             self.netmiko_conn = ConnectHandler(
-                device_type=self.device_os_netmiko or 'cisco_ios',
+                device_type=self.device_os or 'cisco_ios',
                 ip=self.ip,
                 username=self.username,
                 password=self.password
@@ -137,20 +113,10 @@ class HybridNetworkDevice:
     def get_lldp_neighbors(self):
         return self.run_command("show lldp neighbors detail")
 
-    def get_facts(self):
-        if self.napalm_driver:
-            try:
-                return self.napalm_driver.get_facts()
-            except Exception as e:
-                print(f"[-] Failed to get facts: {e}")
-        return {}
+    def get_version_info(self):
+        return self.run_command("show version")
 
     def disconnect(self):
-        if self.napalm_driver:
-            try:
-                self.napalm_driver.close()
-            except Exception:
-                pass
         if self.netmiko_conn:
             try:
                 self.netmiko_conn.disconnect()
