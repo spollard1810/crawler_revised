@@ -11,7 +11,8 @@ parsed_output = handler.run_and_parse("show interface")
 
 # Get structured neighbor information
 cdp_neighbors = handler.get_cdp_neighbors()
-lldp_neighbors = handler.get_lldp_neighbors()
+print(len(cdp_neighbors))
+
 
 # Get version information
 version_info = handler.get_version_info()

@@ -34,9 +34,7 @@ class DeviceHandler:
     def get_cdp_neighbors(self):
         """Get and parse CDP neighbor information"""
         raw = self.sender.get_cdp_neighbors()
-        print(f"[DEBUG] Raw CDP output:\n{raw}")
         parsed = self._parse_output("show cdp neighbors detail", raw)
-        print(f"[DEBUG] Parsed CDP output:\n{parsed}")
         return parsed
 
     def get_lldp_neighbors(self):
