@@ -36,7 +36,9 @@ class CrawlerBuilder:
 
         crawler = Crawler(
             db_path=self._db_path,
-            max_retries=self._max_retries
+            max_retries=self._max_retries,
+            username=self._username,
+            password=self._password
         )
         
         crawler.add_seed_device(
