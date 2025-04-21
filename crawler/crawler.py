@@ -8,9 +8,11 @@ from .fsm import DeviceState, DeviceFSM, StateTransition
 from .data import Database
 
 class Crawler:
-    def __init__(self, db_path: str = "network_crawl.db", max_retries: int = 3):
+    def __init__(self, db_path: str = "network_crawl.db", max_retries: int = 3, username: str = None, password: str = None):
         self.db = Database(db_path)
         self.max_retries = max_retries
+        self.username = username
+        self.password = password
         self._stop_event = threading.Event()
         self._workers: Dict[str, threading.Thread] = {}
         
@@ -20,6 +22,9 @@ class Crawler:
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
         self.logger = logging.getLogger(__name__)
+
+        if not self.username or not self.password:
+            raise ValueError("Username and password must be provided")
 
     def add_seed_device(self, hostname: str, ip: str, username: str, password: str) -> None:
         """Add a seed device to start the crawl from."""
@@ -95,7 +100,7 @@ class Crawler:
     def _handle_connecting(self, device: Dict[str, Any], worker_id: str) -> None:
         """Handle the connecting state."""
         device_id = device['id']
-        handler = DeviceHandler(device['ip'], "admin", "password")  # TODO: Get credentials from config
+        handler = DeviceHandler(device['ip'], self.username, self.password)
         
         try:
             # Test connection
@@ -118,7 +123,7 @@ class Crawler:
     def _handle_collecting(self, device: Dict[str, Any], worker_id: str) -> None:
         """Handle the collecting state."""
         device_id = device['id']
-        handler = DeviceHandler(device['ip'], "admin", "password")
+        handler = DeviceHandler(device['ip'], self.username, self.password)
         
         try:
             # Collect device information
@@ -150,7 +155,7 @@ class Crawler:
     def _handle_discovered(self, device: Dict[str, Any], worker_id: str) -> None:
         """Handle the discovered state."""
         device_id = device['id']
-        handler = DeviceHandler(device['ip'], "admin", "password")
+        handler = DeviceHandler(device['ip'], self.username, self.password)
         
         try:
             # Get neighbors
