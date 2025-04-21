@@ -15,7 +15,8 @@ class DeviceHandler:
         self.parser = CommandParser()
         
         # Store device type for consistent parsing
-        self.device_type = self.device.device_os
+        # Map ios_xe to ios for template parsing since they share the same format
+        self.device_type = 'ios' if self.device.device_os == 'cisco_xe' else self.device.device_os
 
     def _parse_output(self, command, raw_output):
         """Helper method to consistently parse command output"""
@@ -33,7 +34,10 @@ class DeviceHandler:
     def get_cdp_neighbors(self):
         """Get and parse CDP neighbor information"""
         raw = self.sender.get_cdp_neighbors()
-        return self._parse_output("show cdp neighbors detail", raw)
+        print(f"[DEBUG] Raw CDP output:\n{raw}")
+        parsed = self._parse_output("show cdp neighbors detail", raw)
+        print(f"[DEBUG] Parsed CDP output:\n{parsed}")
+        return parsed
 
     def get_lldp_neighbors(self):
         """Get and parse LLDP neighbor information"""
