@@ -1,4 +1,4 @@
-from core.device_handler import DeviceHandler
+from core import DeviceHandler
 
 # Create a device handler
 handler = DeviceHandler("192.168.1.1", "admin", "password")
