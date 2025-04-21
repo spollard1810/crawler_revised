@@ -56,6 +56,9 @@ cdp_neighbors = handler.get_cdp_neighbors()
 # Get device version information
 version_info = handler.get_version_info()
 
+# Get device inventory information
+inventory_info = handler.get_inventory()
+
 # Clean up connection
 handler.disconnect()
 ```
@@ -81,6 +84,7 @@ The main interface class for interacting with network devices.
 - `get_cdp_neighbors()`: Retrieves and parses CDP neighbor information
 - `get_lldp_neighbors()`: Retrieves and parses LLDP neighbor information
 - `get_version_info()`: Retrieves and parses device version information
+- `get_inventory()`: Retrieves and parses device inventory information
 - `disconnect()`: Closes the device connection
 
 ### CommandSender
