@@ -1,1 +1,0 @@
-Init login to cisco device and then detect which type of device it is
