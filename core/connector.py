@@ -31,11 +31,12 @@ class HybridNetworkDevice:
                 raise Exception("SSHDetect failed to determine device type")
 
             print(f"[+] Netmiko detected OS: {self.device_os}")
+            return "OS_DETECTED"
 
         except Exception as e:
             print(f"[-] SSHDetect failed: {e}")
             self.device_os = "unknown"
-
+            return "OS_UNKNOWN"
     def connect_netmiko(self):
         if self.netmiko_conn:
             return
