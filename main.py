@@ -10,5 +10,4 @@ parsed_output = handler.run_and_parse("show interface")
 
 
 
-# Start the crawler
-crawler.start()
+# Crawler builder
